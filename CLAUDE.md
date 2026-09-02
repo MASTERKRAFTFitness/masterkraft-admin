@@ -8,33 +8,44 @@ Guidance for Claude Code working in this repository.
 + TypeScript + Tailwind 4 + Supabase, matching the stack and conventions of
 `masterkraft-portals-franchisee`. Created 2 Sep 2026; the module routes are not built yet.
 
-## Which Supabase project?
+## It administers several databases
 
-**Decide this deliberately — MasterKraft has two, and they are different databases:**
+MasterKraft's data lives in separate Supabase projects, and this admin centre spans them:
 
-| Ref | Project | Used by |
+| Role | Ref | What |
 |---|---|---|
-| `yvalgutmowcvhrnpsbob` | the portals | `masterkraft-portals-hq` |
-| `pmydkwszkgjnolrcnenh` | "Catalogues" | `masterkraft-portals-franchisee` (branch `catalogue-gated`) |
+| **home** | *(choose — see below)* | staff identity: `auth.users` + `staff_members` |
+| administered | `yvalgutmowcvhrnpsbob` | the portals (`masterkraft-portals-hq`) |
+| administered | `pmydkwszkgjnolrcnenh` | "Catalogues" (`masterkraft-portals-franchisee`, branch `catalogue-gated`) |
+| administered | *later* | the CRM, to be migrated here |
 
-Nothing is hardcoded — it comes from `NEXT_PUBLIC_SUPABASE_URL` (see `.env.example`). Whichever you
-point at, `supabase/migrations/0001_staff.sql` must be run **in that project** before anyone can
-sign in, and `staff_members` rows added by hand.
+`src/lib/supabase/projects.ts` is the only place that knows how many databases exist. Adding the CRM
+is one entry there plus two env vars.
 
-## Security model
+## Security model — READ THIS, it is not uniform
 
-Same as the portals: **Postgres RLS is the security boundary.** Everything in React or middleware is
-cosmetic UX.
+**Supabase Auth is per-project.** A session in the home project is not a session in any other, so
+this app cannot use RLS as its boundary everywhere. Two different regimes apply:
 
+**Home project — RLS is the boundary, as in the portals.**
 - `src/middleware.ts` only checks a session *exists*. It runs on the edge with no table access, so it
   cannot check staff membership — don't add that there and assume it's enforced.
 - `src/lib/staff.ts` `currentStaff()` reads `staff_members` for rendering decisions.
-- The real gate is `is_masterkraft_staff()` in Postgres, called from the RLS policies of every table
-  this app touches. **A table without such a policy is not protected by anything in this repo.**
+- The real gate is `is_masterkraft_staff()`, called from the RLS policies of every table this app
+  touches. **A table without such a policy is not protected by anything in this repo.**
 - `staff_members` has no insert/update/delete policy on purpose: staff are added deliberately from
   the SQL editor, never through the app.
-- The service-role key must stay server-side. It is not used anywhere yet; keep it that way unless a
-  route genuinely needs to bypass RLS, and document why if so.
+
+**Administered projects — YOUR CODE is the boundary. There is no safety net.**
+- Reached only via `adminDb(project)` in `src/lib/supabase/admin.ts`, using a **service-role key that
+  bypasses RLS entirely**.
+- The staff check lives *inside* `adminDb()` rather than in its callers, so a client cannot be
+  obtained without it having run. **Do not add a variant that skips it**, and do not cache the
+  returned client across requests.
+- Every module reaching an administered project is one bug away from unrestricted read/write there.
+  Treat those route handlers with the care that implies: validate inputs, scope queries explicitly,
+  never interpolate user input into filters.
+- `server-only` makes importing `admin.ts` from a client component a build error. Keep it that way.
 
 ## Running locally
 

@@ -14,10 +14,10 @@ MasterKraft's data lives in separate Supabase projects, and this admin centre sp
 
 | Role | Ref | What |
 |---|---|---|
-| **home** | *(choose — see below)* | staff identity: `auth.users` + `staff_members` |
+| **home** | `bkzyuhaeisvjikbwzlpf` | `masterkraft-admin` — staff identity now, CRM tables when they migrate |
 | administered | `yvalgutmowcvhrnpsbob` | the portals (`masterkraft-portals-hq`) |
 | administered | `pmydkwszkgjnolrcnenh` | "Catalogues" (`masterkraft-portals-franchisee`, branch `catalogue-gated`) |
-| administered | *later* | the CRM, to be migrated here |
+| administered | *n/a* | the CRM will move into the **home** project, not be administered remotely |
 
 `src/lib/supabase/projects.ts` is the only place that knows how many databases exist. Adding the CRM
 is one entry there plus two env vars.

@@ -47,6 +47,26 @@ this app cannot use RLS as its boundary everywhere. Two different regimes apply:
   never interpolate user input into filters.
 - `server-only` makes importing `admin.ts` from a client component a build error. Keep it that way.
 
+## Sign-in will not work until custom SMTP is configured
+
+Supabase's **built-in SMTP only delivers to members of the Supabase organisation**. The Supabase
+account here is `mwines35@gmail.com`, so a one-time code sent to `michael@masterkraft.com` (or to
+Steve, or Gaetana) is silently never delivered — the login page looks broken with no error.
+
+This already cost time on the Catalogues project. Fix it once, in the home project's
+**Auth → Emails → SMTP settings**:
+
+| Field | Value |
+|---|---|
+| Host | `smtp.resend.com` |
+| Port | `465` |
+| Username | the literal string `resend` |
+| Password | a Resend API key |
+| Sender | an address on **masterkraft.com** — the only verified Resend domain |
+
+Staff addresses are on `masterkraft.com`, not personal accounts. `michael@masterkraft.com` is the
+first admin.
+
 ## Running locally
 
 ```

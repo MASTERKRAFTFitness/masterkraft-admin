@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@theme {
+  --color-mk-ink: #14161a;
+  --color-mk-line: #e4e6ea;
+  --color-mk-accent: #c4161c;
+}
+
+:root { color-scheme: light dark; }
